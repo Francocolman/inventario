@@ -2387,6 +2387,9 @@ document.addEventListener("DOMContentLoaded", async ()=>{
     setSyncStatus("Conectando...","Firebase");
     await loadCloud();
 });
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
 </script>
 </body>
 </html>
