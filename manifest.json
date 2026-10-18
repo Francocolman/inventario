@@ -1,0 +1,13 @@
+{
+  "background_color": "hsv(218, 73%, 5%)",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "TECNOFS",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "TECNOFS",
+  "start_url": "/",
+  "theme_color": "rgb(30, 139, 255)",
+  "id": "com.francocolman.tecnofs",
+  "description": "Catálogos de Precios de Reparación de Celulares TECNOFS"
+}
