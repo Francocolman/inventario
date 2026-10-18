@@ -1,13 +1,18 @@
 {
-  "background_color": "hsv(218, 73%, 5%)",
-  "dir": "ltr",
-  "display": "standalone",
   "name": "TECNOFS",
-  "orientation": "any",
-  "scope": "/",
   "short_name": "TECNOFS",
-  "start_url": "/",
-  "theme_color": "rgb(30, 139, 255)",
   "id": "com.francocolman.tecnofs",
-  "description": "Catálogos de Precios de Reparación de Celulares TECNOFS"
+  "description": "Catálogo de Precios de Reparación de Celulares TECNOFS",
+  "start_url": "/inventario/",
+  "display": "standalone",
+  "background_color": "#03060b",
+  "theme_color": "#1e8bff",
+  "icons": [
+    { "src": "launchericon-48x48.png", "sizes": "48x48", "type": "image/png" },
+    { "src": "launchericon-72x72.png", "sizes": "72x72", "type": "image/png" },
+    { "src": "launchericon-96x96.png", "sizes": "96x96", "type": "image/png" },
+    { "src": "launchericon-144x144.png", "sizes": "144x144", "type": "image/png" },
+    { "src": "launchericon-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "launchericon-512x512.png", "sizes": "512x512", "type": "image/png" }
+  ]
 }
