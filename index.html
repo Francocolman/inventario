@@ -1219,6 +1219,7 @@ try {
 }
 
 const STORAGE_KEY = "tecnofs_v5";
+const ADMIN_SESSION_KEY = "tecnofs_admin_session";
 const ADMIN_PASSWORD = "tecnofs2026";
 
 const DEFAULT_DATA = {
@@ -1246,6 +1247,19 @@ let navCategoryId = null;
 let navBrandId = null;
 let modelSearch = "";
 let adminAuthed = false;
+try {
+    adminAuthed = localStorage.getItem(ADMIN_SESSION_KEY) === "1";
+} catch (e) {
+    adminAuthed = false;
+}
+function persistAdminSession(value){
+    try {
+        if (value) localStorage.setItem(ADMIN_SESSION_KEY, "1");
+        else localStorage.removeItem(ADMIN_SESSION_KEY);
+    } catch (e) {
+        console.error("No se pudo persistir la sesión admin:", e);
+    }
+}
 let pendingPage = null;
 let adminSearch = "";
 let editingType = null;
@@ -2351,6 +2365,7 @@ document.addEventListener("DOMContentLoaded", async ()=>{
             const typed = lp ? lp.value : "";
             if(typed === ADMIN_PASSWORD){
                 adminAuthed = true;
+                persistAdminSession(true);
                 if(lp) lp.value = "";
                 const target = pendingPage || "admin";
                 pendingPage = null;
@@ -2371,6 +2386,7 @@ document.addEventListener("DOMContentLoaded", async ()=>{
     if(lo){
         lo.addEventListener("click", ()=>{
             adminAuthed = false;
+            persistAdminSession(false);
             catalogView = "categories";
             navCategoryId = null;
             navBrandId = null;
@@ -2392,4 +2408,4 @@ document.addEventListener("DOMContentLoaded", async ()=>{
   }
 </script>
 </body>
-</html>
+                </html>
