@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Generador de Garantías — TECNOFS</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+
+<link rel="stylesheet" href="garantias.css">
+
+<style>
+  /* Estilos extras para las pestañas y el historial */
+  .tabs { display: flex; gap: 10px; margin-bottom: 20px; justify-content: center; }
+  .tab-btn { padding: 12px 24px; border-radius: 12px; font-weight: 600; font-size: 15px; border: 2px solid #1f6fff; background: transparent; color: #7dc1ff; transition: 0.3s; }
+  .tab-btn.active { background: #1f6fff; color: #fff; box-shadow: 0 8px 20px rgba(31,111,255,0.4); }
+  
+  /* Switch Con/Sin Garantía */
+  .switch-group { display: flex; align-items: center; justify-content: space-between; background: #181818; padding: 15px; border-radius: 12px; border: 1.5px solid #24344a; margin-bottom: 15px; }
+  .switch-label { color: #fff; font-weight: 600; font-size: 15px; }
+  .switch { position: relative; display: inline-block; width: 60px; height: 34px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #d93025; transition: .4s; border-radius: 34px; }
+  .slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+  input:checked + .slider { background-color: #18c964; }
+  input:checked + .slider:before { transform: translateX(26px); }
+
+  /* Login Historial */
+  .login-history-wrap { max-width: 400px; margin: 40px auto; text-align: center; background: #101010; padding: 30px; border-radius: 20px; border: 2px solid #1f6fff; }
+  .login-history-wrap h2 { color: #fff; margin-bottom: 20px; }
+  .login-history-wrap input { width: 100%; padding: 14px; background: #181818; border: 1.5px solid #24344a; border-radius: 12px; color: #fff; text-align: center; font-size: 16px; letter-spacing: 2px; margin-bottom: 15px; outline: none; }
+  .login-history-wrap input:focus { border-color: #1f6fff; }
+  .login-history-wrap button { width: 100%; padding: 14px; background: #1f6fff; color: #fff; border-radius: 12px; font-weight: bold; font-size: 15px; border: none; cursor: pointer; }
+
+  /* Carpetas del Historial */
+  .folder-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+  @media (max-width: 500px) { .folder-grid { grid-template-columns: 1fr; } }
+  .folder-card { background: #101010; border: 2px solid #24344a; border-radius: 20px; padding: 30px 20px; text-align: center; cursor: pointer; transition: 0.3s; }
+  .folder-card:hover { border-color: #1f6fff; transform: translateY(-3px); box-shadow: 0 8px 20px rgba(31,111,255,0.2); }
+  .folder-icon { font-size: 50px; margin-bottom: 10px; }
+  .folder-card h3 { color: #fff; font-size: 18px; margin-bottom: 5px; }
+  .folder-card p { color: #7dc1ff; font-size: 13px; }
+
+  /* Lista de Garantías */
+  .history-list { display: flex; flex-direction: column; gap: 15px; }
+  .history-month-title { color: #7dc1ff; font-size: 16px; font-weight: 700; margin-top: 20px; margin-bottom: 5px; border-bottom: 1px solid #24344a; padding-bottom: 5px; text-transform: capitalize; }
+  .history-card { background: #101010; border: 1px solid #24344a; border-radius: 15px; padding: 15px; display: flex; justify-content: space-between; align-items: center; transition: 0.2s; }
+  .history-card:hover { border-color: #1f6fff; }
+  .history-info h3 { color: #fff; font-size: 16px; margin-bottom: 5px; }
+  .history-info p { color: #7dc1ff; font-size: 12px; margin-bottom: 2px; }
+  .history-info .price-tag { color: #ffc857; font-weight: bold; font-size: 14px; margin-top: 5px; display: block; }
+  .btn-download-history { background: #1f6fff; color: #fff; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; }
+  .btn-download-history:hover { background: #3b93ff; }
+  .btn-back-folder { background: transparent; color: #7dc1ff; border: 1px solid #24344a; padding: 8px 15px; border-radius: 10px; cursor: pointer; font-weight: 600; margin-bottom: 15px; display: inline-flex; align-items: center; gap: 5px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+    <div style="width: 100%; max-width: 900px; margin: 0 auto 15px auto; text-align: left;">
+    <a href="index.html" style="display: inline-flex; align-items: center; gap: 8px; color: #7dc1ff; text-decoration: none; font-weight: 600; font-size: 14px; background: #101010; padding: 10px 15px; border-radius: 10px; border: 1px solid #1f6fff; transition: 0.3s;">
+        ← Volver al Menú
+    </a>
+</div>
+  <div class="encabezado">
+    <img src="logo.png" alt="Logo TECNOFS">
+    <h1>TECNOFS</h1>
+    <p>GENERADOR DE GARANTÍAS DIGITALES</p>
+  </div>
+
+  <!-- PESTAÑAS -->
+  <div class="tabs">
+    <button class="tab-btn active" id="tabForm">📝 Crear</button>
+    <button class="tab-btn" id="tabHistory">📜 Historial</button>
+  </div>
+
+  <!-- ================= VISTA: FORMULARIO ================= -->
+  <div id="viewForm">
+    
+    <!-- Switch Con/Sin Garantía -->
+    <div class="switch-group">
+      <span class="switch-label" id="labelGarantia">Con Garantía</span>
+      <label class="switch">
+        <input type="checkbox" id="toggleGarantia" checked>
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <form id="formGarantia" autocomplete="off" novalidate>
+
+      <div class="panel">
+        <h2>👤 DATOS DEL CLIENTE</h2>
+        <div class="grid">
+          <div class="campo"><label for="cliente">NOMBRE DEL CLIENTE *</label><input type="text" id="cliente" required placeholder=""></div>
+          <div class="campo"><label for="telefono">TELÉFONO *</label><input type="tel" id="telefono" required placeholder=""></div>
+          <div class="campo"><label for="email">EMAIL (opcional)</label><input type="email" id="email" placeholder=""></div>
+          <div class="campo"><label for="modelo">MODELO DEL EQUIPO *</label><input type="text" id="modelo" required placeholder=""></div>
+          <div class="campo full"><label for="imei">IMEI (opcional)</label><input type="text" id="imei" placeholder=""></div>
+        </div>
+      </div>
+
+      <!-- Campo Precio Cobrado (Solo para el historial) -->
+      <div class="panel" style="border-color: #ffc857;">
+        <h2 style="color: #ffc857;">💰 PRECIO COBRADO (Privado)</h2>
+        <div class="grid">
+          <div class="campo full">
+            <label for="precio" style="color:#ffc857;">MONTO COBRADO AL CLIENTE</label>
+            <input type="text" inputmode="numeric" id="precio" placeholder="">
+            <div class="ayuda">Este precio NO aparecerá en el archivo HTML del cliente. Solo se guarda para tu historial.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>📅 FECHAS Y VIGENCIA</h2>
+        <div class="grid">
+          <div class="campo"><label for="fecha">FECHA DE REPARACIÓN *</label><input type="date" id="fecha" required></div>
+          <div class="campo"><label for="meses">MESES DE GARANTÍA</label><input type="number" id="meses" value="1" min="0" max="60" step="1"><div class="ayuda">Al cambiar la fecha o los meses, el vencimiento se calcula solo.</div></div>
+          <div class="campo full"><label for="vencimiento">VENCIMIENTO DE GARANTÍA</label><input type="date" id="vencimiento"><div class="ayuda">Puedes modificarlo manualmente si lo necesitas.</div></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>🔧 TRABAJO REALIZADO</h2>
+        <div class="grid">
+          <div class="campo full">
+            <label for="trabajo">DESCRIPCIÓN DEL TRABAJO *</label>
+            <textarea id="trabajo" required placeholder=""></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>📸 FOTOGRAFÍAS DEL EQUIPO</h2>
+        <div class="grid">
+          <div class="campo full">
+            <label for="fotoFrontal">FOTO FRONTAL</label>
+            <div class="upload-zone" id="uploadFrontal"><input type="file" id="fileFrontal" accept="image/*"><p>📷 Subir foto frontal</p></div>
+            <input type="url" id="fotoFrontal" placeholder="O pega un link aquí..." style="margin-top:5px;">
+          </div>
+          <div class="campo full">
+            <label for="fotoTrasera">FOTO TRASERA</label>
+            <div class="upload-zone" id="uploadTrasera"><input type="file" id="fileTrasera" accept="image/*"><p>📷 Subir foto trasera</p></div>
+            <input type="url" id="fotoTrasera" placeholder="O pega un link aquí..." style="margin-top:5px;">
+          </div>
+          <div class="campo full">
+            <label for="fotoAntes">FOTO ANTES Y DESPUÉS</label>
+            <div class="upload-zone" id="uploadAntes"><input type="file" id="fileAntes" accept="image/*"><p>📷 Subir foto antes/después</p></div>
+            <input type="url" id="fotoAntes" placeholder="O pega un link aquí..." style="margin-top:5px;">
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>📝 NOMBRE DEL ARCHIVO</h2>
+        <div class="grid">
+          <div class="campo full">
+            <label for="nombreArchivo">NOMBRE PERSONALIZADO (opcional)</label>
+            <input type="text" id="nombreArchivo" placeholder="">
+            <div class="ayuda" id="previewNombre">Se guardará como: <b>Garantía - Cliente.html</b></div>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <div class="acciones">
+      <button type="button" class="btn-principal" id="btnGenerar">⬇ GENERAR Y DESCARGAR</button>
+      <button type="button" class="btn-secundario" id="btnPreview">👁 VISTA PREVIA</button>
+      <button type="button" class="btn-limpiar" id="btnLimpiar">🧹 LIMPIAR</button>
+    </div>
+    <div class="mensaje" id="mensaje"></div>
+  </div>
+
+  <!-- ================= VISTA: LOGIN HISTORIAL ================= -->
+  <div id="viewHistoryLogin" style="display:none;">
+    <div class="login-history-wrap">
+      <h2>🔒 Acceso Restringido</h2>
+      <p style="color:#7dc1ff; font-size:14px; margin-bottom:20px;">Ingresá la contraseña para ver el historial y los precios cobrados.</p>
+      <input type="password" id="passHistory" placeholder="••••••••">
+      <button id="btnLoginHistory">Desbloquear Historial</button>
+      <p id="errorHistory" style="color:#d93025; font-size:12px; margin-top:10px;"></p>
+    </div>
+  </div>
+
+  <!-- ================= VISTA: HISTORIAL (CARPETAS) ================= -->
+  <div id="viewHistoryFolders" style="display:none;">
+    <div class="panel">
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #1c2b40; padding-bottom:10px; margin-bottom:20px;">
+    <h2 style="border:none; padding:0; margin:0;">📂 Mis Garantías</h2>
+    <button id="btnLogoutHistory" style="background:transparent; color:#ff5566; border:1px solid #ff5566; padding:5px 12px; border-radius:8px; font-size:12px; cursor:pointer; font-weight:bold;">Cerrar Sesión</button>
+</div>
+      <div class="folder-grid">
+        <div class="folder-card" id="folderCon">
+          <div class="folder-icon">🛡️</div>
+          <h3>Con Garantía</h3>
+          <p id="countCon">0 trabajos</p>
+        </div>
+        <div class="folder-card" id="folderSin">
+          <div class="folder-icon">🔧</div>
+          <h3>Sin Garantía</h3>
+          <p id="countSin">0 trabajos</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= VISTA: HISTORIAL (LISTA) ================= -->
+  <div id="viewHistoryList" style="display:none;">
+    <button class="btn-back-folder" id="btnBackFolders">← Volver a carpetas</button>
+    
+    <div class="panel">
+      <h2 id="titleList">Garantías</h2>
+      <div class="campo full">
+        <input type="text" id="searchHistory" placeholder="Buscar por cliente o modelo..." style="background:#181818; border:1.5px solid #24344a; border-radius:12px; padding:13px 14px; color:#fff; font-size:15px; width:100%; outline:none;">
+      </div>
+    </div>
+    
+    <div class="history-list" id="historyContainer">
+      <!-- Aquí se cargan las garantías -->
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL CONFIRMAR BORRADO -->
+<div class="modal-overlay" id="confirmDeleteModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); z-index:9999; align-items:center; justify-content:center;">
+  <div style="background:#101010; padding:25px; border-radius:15px; border:1px solid #ff5566; max-width:350px; width:90%; text-align:center; box-shadow: 0 0 30px rgba(255,85,102,0.2);">
+    <h2 style="color:#fff; margin-bottom:15px; font-size: 20px;">¿Estás seguro?</h2>
+    <p style="color:#aaa; margin-bottom:20px; font-size: 14px;">Esta acción eliminará la garantía del historial de forma permanente.</p>
+    <div style="display:flex; gap:10px; justify-content:center;">
+      <button id="btnCancelDelete" style="background:#24344a; color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight: bold;">Cancelar</button>
+      <button id="btnConfirmDelete" style="background:#ff5566; color:#fff; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight: bold;">Sí, borrar</button>
+    </div>
+  </div>
+</div>
+<script src="garantias.js"></script>
+</body>
+</html>

@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0d2340">
+<title>TECNO FS — Control Financiero</title>
+
+<!-- Fuente -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<!-- AQUÍ AGREGAMOS FIREBASE -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+
+<!-- Conectamos el CSS -->
+<link rel="stylesheet" href="finanzas.css">
+</head>
+<body>
+
+<!-- ============================================================
+     PANTALLA DE ACCESO (LOGIN)
+============================================================ -->
+<div class="auth-screen" id="authScreen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <img src="logo.png" alt="Logo TECNO FS">
+    </div>
+    <h1 class="auth-title">TECNO FS</h1>
+    <p class="auth-subtitle">Control Financiero</p>
+
+    <form id="authForm" autocomplete="off">
+      <div class="auth-lock">🔒</div>
+      <label class="auth-label" id="authLabel">Ingresá tu contraseña</label>
+      <input type="password" id="authPassword" class="auth-input" placeholder="••••••••" autocomplete="current-password" required>
+      <p class="auth-error" id="authError"></p>
+      <button type="submit" class="auth-button" id="authSubmit">INGRESAR</button>
+    </form>
+
+    <p class="auth-note">
+      🔐 Acceso personal. Los datos se sincronizan en la nube.
+    </p>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     APLICACIÓN PRINCIPAL
+============================================================ -->
+<div class="app hidden" id="app">
+
+  <!-- OVERLAY MOBILE -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <img src="logo.png" class="brand-logo" alt="Logo TECNO FS">
+      <div class="brand-info">
+        <strong>TECNO FS</strong>
+        <span>Control financiero</span>
+      </div>
+    </div>
+
+    <nav class="main-nav">
+        <button class="nav-item" onclick="window.location.href='index.html'">
+  <span class="nav-icon">🏠</span><span>Menú Principal</span>
+</button>
+      <button class="nav-item active" data-page="inicio">
+        <span class="nav-icon">◫</span><span>Inicio</span>
+      </button>
+      <button class="nav-item" data-page="movimientos">
+        <span class="nav-icon">☰</span><span>Movimientos</span>
+      </button>
+      <button class="nav-item" data-page="calendario">
+        <span class="nav-icon">▦</span><span>Calendario</span>
+      </button>
+      <button class="nav-item" data-page="reportes">
+        <span class="nav-icon">◔</span><span>Reportes</span>
+      </button>
+      <button class="nav-item" data-page="configuracion">
+        <span class="nav-icon">⚙</span><span>Configuración</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <button class="nav-item logout-item" id="logoutBtn">
+        <span class="nav-icon">⎋</span><span>Cerrar sesión</span>
+      </button>
+      <div class="storage-status">
+        <span class="status-dot"></span>
+        <div>
+          <strong id="syncStatusText">Sincronizando...</strong>
+          <small>Nube Firebase</small>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <button class="mobile-menu" id="mobileMenu" aria-label="Menú">☰</button>
+      <div class="topbar-title">
+        <h1 id="pageTitle">Balance</h1>
+        <p id="pageDescription">Controlá todo lo que entra y sale de TECNO FS.</p>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-button" id="openIncomeTop" title="Nuevo ingreso">+</button>
+        <button class="icon-button expense-button" id="openExpenseTop" title="Nuevo egreso">−</button>
+      </div>
+    </header>
+
+    <!-- ============ PAGE: INICIO ============ -->
+    <section class="page active" id="page-inicio">
+      <div class="period-bar">
+        <div>
+          <span class="period-label">Período</span>
+          <strong id="currentPeriodLabel">Este mes</strong>
+        </div>
+        <div class="period-buttons">
+          <button class="period-btn" data-period="day">Hoy</button>
+          <button class="period-btn" data-period="week">Semana</button>
+          <button class="period-btn active" data-period="month">Mes</button>
+          <button class="period-btn" data-period="year">Año</button>
+          <button class="period-btn" data-period="all">Todo</button>
+        </div>
+      </div>
+
+      <div class="balance-card">
+        <div class="balance-card-top">
+          <div>
+            <span class="balance-label">Resultado del período</span>
+            <h2 id="balanceTotal">G. 0</h2>
+          </div>
+          <div class="balance-icon">₲</div>
+        </div>
+        <div class="balance-summary">
+          <div class="summary-item">
+            <div class="summary-heading"><span class="summary-arrow income-text">↗</span><span>Ingresos</span></div>
+            <strong id="totalIncome" class="income-text">G. 0</strong>
+          </div>
+          <div class="summary-divider"></div>
+          <div class="summary-item">
+            <div class="summary-heading"><span class="summary-arrow expense-text">↙</span><span>Egresos</span></div>
+            <strong id="totalExpense" class="expense-text">G. 0</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="quick-actions">
+        <button class="quick-card income-card" id="newIncome">
+          <div class="quick-icon">+</div>
+          <div><strong>Nuevo ingreso</strong><span>Registrar reparación</span></div>
+        </button>
+        <button class="quick-card expense-card" id="newExpense">
+          <div class="quick-icon">−</div>
+          <div><strong>Nuevo egreso</strong><span>Registrar gasto</span></div>
+        </button>
+      </div>
+
+      <div class="section-heading">
+        <div>
+          <h2>Actividad reciente</h2>
+          <p>Últimos movimientos registrados</p>
+        </div>
+        <button class="text-button" data-page="movimientos">Ver todos →</button>
+      </div>
+
+      <div class="movement-list" id="recentList"></div>
+    </section>
+
+    <!-- ============ PAGE: MOVIMIENTOS ============ -->
+    <section class="page" id="page-movimientos">
+      <div class="page-header">
+        <div>
+          <h2>Movimientos</h2>
+          <p>Todos tus ingresos y egresos.</p>
+        </div>
+        <div class="header-buttons">
+          <button class="primary-button" id="newIncomeMovements">+ Ingreso</button>
+          <button class="danger-button" id="newExpenseMovements">− Egreso</button>
+        </div>
+      </div>
+
+      <div class="filters">
+        <div class="search-box">
+          <span>⌕</span>
+          <input type="search" id="movementSearch" placeholder="Buscar reparación, modelo, gasto...">
+        </div>
+        <select id="movementType">
+          <option value="all">Todos</option>
+          <option value="income">Ingresos</option>
+          <option value="expense">Egresos</option>
+        </select>
+        <select id="movementPeriod">
+          <option value="all">Todo el tiempo</option>
+          <option value="day">Hoy</option>
+          <option value="week">Esta semana</option>
+          <option value="month" selected>Este mes</option>
+          <option value="year">Este año</option>
+        </select>
+      </div>
+
+      <div class="movement-list" id="movementList"></div>
+    </section>
+
+    <!-- ============ PAGE: CALENDARIO ============ -->
+    <section class="page" id="page-calendario">
+      <div class="page-header">
+        <div>
+          <h2>Calendario</h2>
+          <p>Consultá tus ingresos y gastos por día.</p>
+        </div>
+      </div>
+
+      <div class="calendar-container">
+        <div class="calendar-header">
+          <button class="calendar-nav" id="prevMonth">‹</button>
+          <h2 id="calendarMonth">—</h2>
+          <button class="calendar-nav" id="nextMonth">›</button>
+        </div>
+        <div class="calendar-weekdays">
+          <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+        </div>
+        <div class="calendar-grid" id="calendarGrid"></div>
+      </div>
+
+      <div class="selected-day-panel" id="selectedDayPanel">
+        <div class="empty-selection">
+          <div class="empty-icon">📅</div>
+          <h3>Seleccioná un día</h3>
+          <p>Tocá una fecha para ver los movimientos registrados.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PAGE: REPORTES ============ -->
+    <section class="page" id="page-reportes">
+      <div class="page-header">
+        <div>
+          <h2>Reportes</h2>
+          <p>Analizá cómo estuvo tu negocio.</p>
+        </div>
+      </div>
+
+      <div class="report-period">
+        <button class="report-period-btn" data-report="day">Hoy</button>
+        <button class="report-period-btn" data-report="week">Semana</button>
+        <button class="report-period-btn active" data-report="month">Mes</button>
+        <button class="report-period-btn" data-report="year">Año</button>
+        <button class="report-period-btn" data-report="all">Todo</button>
+        <button class="report-period-btn" data-report="custom">Personalizado</button>
+      </div>
+
+      <div class="custom-range hidden" id="customRange">
+        <div class="form-group">
+          <label for="rangeFrom">Desde</label>
+          <input type="date" id="rangeFrom">
+        </div>
+        <div class="form-group">
+          <label for="rangeTo">Hasta</label>
+          <input type="date" id="rangeTo">
+        </div>
+        <button class="primary-button" id="applyRange">Aplicar</button>
+      </div>
+
+      <div class="report-cards">
+        <div class="report-card">
+          <span>Ingresos</span>
+          <strong id="reportIncome" class="income-text">G. 0</strong>
+          <small id="reportIncomeCount">0 movimientos</small>
+        </div>
+        <div class="report-card">
+          <span>Egresos</span>
+          <strong id="reportExpense" class="expense-text">G. 0</strong>
+          <small id="reportExpenseCount">0 movimientos</small>
+        </div>
+        <div class="report-card highlight">
+          <span>Resultado neto</span>
+          <strong id="reportBalance">G. 0</strong>
+          <small>Ingresos − Egresos</small>
+        </div>
+      </div>
+
+      <div class="section-heading">
+        <div>
+          <h2>Ingresos vs Egresos</h2>
+          <p>Últimos 6 meses</p>
+        </div>
+      </div>
+      <div class="chart-container">
+        <div class="chart-legend">
+          <span><i class="dot income-dot"></i> Ingresos</span>
+          <span><i class="dot expense-dot"></i> Egresos</span>
+        </div>
+        <div class="chart" id="chart"></div>
+      </div>
+
+      <div class="section-heading">
+        <div>
+          <h2>Resumen detallado</h2>
+          <p>Detalle del período seleccionado.</p>
+        </div>
+      </div>
+      <div class="report-breakdown" id="reportBreakdown"></div>
+    </section>
+
+    <!-- ============ PAGE: CONFIGURACIÓN ============ -->
+    <section class="page" id="page-configuracion">
+      <div class="page-header">
+        <div>
+          <h2>Configuración</h2>
+          <p>Seguridad, respaldo y datos.</p>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>🔐 Seguridad</h3>
+        <p class="settings-note">Cambiá tu contraseña de acceso.</p>
+        <form id="passwordForm" class="settings-form">
+          <div class="form-group">
+            <label for="currentPassword">Contraseña actual</label>
+            <input type="password" id="currentPassword" required autocomplete="current-password">
+          </div>
+          <div class="form-group">
+            <label for="newPassword">Nueva contraseña</label>
+            <input type="password" id="newPassword" required minlength="4" autocomplete="new-password">
+          </div>
+          <div class="form-group">
+            <label for="confirmPassword">Confirmar nueva contraseña</label>
+            <input type="password" id="confirmPassword" required minlength="4" autocomplete="new-password">
+          </div>
+          <button type="submit" class="primary-button">Cambiar contraseña</button>
+        </form>
+      </div>
+
+      <div class="settings-section">
+        <h3>💾 Respaldo de datos</h3>
+        <p class="settings-note">Exportá o importá tus movimientos en formato JSON.</p>
+        <div class="settings-actions">
+          <button class="primary-button" id="exportData">↓ Exportar datos</button>
+          <button class="secondary-button" id="importData">↑ Importar datos</button>
+          <input type="file" id="importFile" accept=".json" hidden>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <h3>🔓 Sesión</h3>
+        <p class="settings-note">Cerrá la sesión actual para volver a pedir contraseña.</p>
+        <button class="secondary-button" id="logoutBtn2">Cerrar sesión</button>
+      </div>
+
+      <div class="settings-section danger">
+        <h3>⚠ Zona peligrosa</h3>
+        <p class="settings-note">Elimina permanentemente todos tus movimientos.</p>
+        <button class="danger-button" id="resetData">Borrar todos los datos</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ============================================================
+     MODAL: INGRESO
+============================================================ -->
+<div class="modal-overlay" id="incomeModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <span class="modal-label income-label">NUEVO INGRESO</span>
+        <h2 id="incomeModalTitle">Registrar reparación</h2>
+        <p>Guardá el dinero que recibiste por el servicio.</p>
+      </div>
+      <button class="modal-close" data-close="incomeModal">×</button>
+    </div>
+
+    <form id="incomeForm">
+      <input type="hidden" id="incomeId">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="incomeDate">Fecha</label>
+          <input type="date" id="incomeDate" required>
+        </div>
+        <div class="form-group">
+          <label for="incomeAmount">Monto cobrado</label>
+          <div class="money-input"><span>G.</span><input type="text" inputmode="numeric" id="incomeAmount" placeholder="0" required></div>
+        </div>
+        <div class="form-group full">
+          <label for="incomeService">Tipo de reparación</label>
+          <input type="text" id="incomeService" placeholder="Ej.: Cambio de display" required>
+        </div>
+        <div class="form-group">
+          <label for="incomeBrand">Marca</label>
+          <input type="text" id="incomeBrand" placeholder="Ej.: Samsung">
+        </div>
+        <div class="form-group">
+          <label for="incomeModel">Modelo</label>
+          <input type="text" id="incomeModel" placeholder="Ej.: Galaxy A13">
+        </div>
+        <div class="form-group">
+          <label for="incomeLocation">Modalidad</label>
+          <select id="incomeLocation">
+            <option value="local">En el local</option>
+            <option value="domicilio">A domicilio</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="incomeClient">Cliente <span>Opcional</span></label>
+          <input type="text" id="incomeClient" placeholder="Nombre del cliente">
+        </div>
+        <div class="form-group full">
+          <label>Foto de la reparación <span>Opcional</span></label>
+          <div class="photo-upload" id="incomePhotoUpload">
+            <input type="file" id="incomePhoto" accept="image/*" hidden>
+            <div class="photo-placeholder" id="photoPlaceholder">
+              <div class="photo-icon">📷</div>
+              <strong>Agregar foto</strong>
+              <span>Tocá para seleccionar una imagen</span>
+            </div>
+            <img id="incomePhotoPreview" class="photo-preview" alt="Vista previa">
+          </div>
+          <button type="button" class="remove-photo" id="removeIncomePhoto">Quitar foto</button>
+        </div>
+        <div class="form-group full">
+          <label for="incomeNotes">Nota <span>Opcional</span></label>
+          <textarea id="incomeNotes" rows="3" placeholder="Cualquier detalle de la reparación..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="secondary-button" data-close="incomeModal">Cancelar</button>
+        <button type="submit" class="primary-button">Guardar ingreso</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: EGRESO
+============================================================ -->
+<div class="modal-overlay" id="expenseModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <span class="modal-label expense-label">NUEVO EGRESO</span>
+        <h2 id="expenseModalTitle">Registrar gasto</h2>
+        <p>Guardá todo el dinero que salió del negocio.</p>
+      </div>
+      <button class="modal-close" data-close="expenseModal">×</button>
+    </div>
+
+    <form id="expenseForm">
+      <input type="hidden" id="expenseId">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="expenseDate">Fecha</label>
+          <input type="date" id="expenseDate" required>
+        </div>
+        <div class="form-group">
+          <label for="expenseAmount">Monto</label>
+          <div class="money-input"><span>G.</span><input type="text" inputmode="numeric" id="expenseAmount" placeholder="0" required></div>
+        </div>
+        <div class="form-group">
+          <label for="expenseCategory">Categoría</label>
+          <select id="expenseCategory">
+            <option value="repuesto">Repuesto</option>
+            <option value="herramienta">Herramienta</option>
+            <option value="insumo">Insumo</option>
+            <option value="transporte">Transporte</option>
+            <option value="servicio">Servicio</option>
+            <option value="alquiler">Alquiler</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="expenseConcept">Concepto</label>
+          <input type="text" id="expenseConcept" placeholder="Ej.: Display Samsung A13" required>
+        </div>
+        <div class="form-group">
+          <label for="expenseBrand">Marca <span>Opcional</span></label>
+          <input type="text" id="expenseBrand" placeholder="Ej.: Samsung">
+        </div>
+        <div class="form-group">
+          <label for="expenseModel">Modelo <span>Opcional</span></label>
+          <input type="text" id="expenseModel" placeholder="Ej.: A13">
+        </div>
+        <div class="form-group full">
+          <label for="expenseQuality">Calidad <span>Opcional</span></label>
+          <input type="text" id="expenseQuality" placeholder="Ej.: OLED, Original, Premium...">
+        </div>
+        <div class="form-group full">
+          <label for="expenseSupplier">Proveedor <span>Opcional</span></label>
+          <input type="text" id="expenseSupplier" placeholder="Nombre del proveedor">
+        </div>
+        <div class="form-group full">
+          <label for="expenseNotes">Nota <span>Opcional</span></label>
+          <textarea id="expenseNotes" rows="3" placeholder="Detalles del gasto..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="secondary-button" data-close="expenseModal">Cancelar</button>
+        <button type="submit" class="danger-button">Guardar egreso</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: DETALLE
+============================================================ -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal detail-modal">
+    <div class="modal-header">
+      <div>
+        <span class="modal-label" id="detailType">INGRESO</span>
+        <h2 id="detailTitle">Detalle</h2>
+        <p id="detailDate">—</p>
+      </div>
+      <button class="modal-close" data-close="detailModal">×</button>
+    </div>
+    <div id="detailContent"></div>
+    <div class="modal-footer">
+      <button type="button" class="secondary-button" id="editDetail">Editar</button>
+      <button type="button" class="danger-button" id="deleteDetail">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     TOAST
+============================================================ -->
+<div class="toast" id="toast">
+  <span class="toast-icon">✓</span>
+  <div>
+    <strong id="toastTitle">Guardado</strong>
+    <span id="toastMessage">El movimiento fue guardado correctamente.</span>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMAR BORRADO -->
+<div class="modal-overlay" id="confirmDeleteModal">
+  <div class="modal" style="max-width: 400px;">
+    <div class="modal-header">
+      <div>
+        <span class="modal-label expense-label">CUIDADO</span>
+        <h2>Eliminar movimiento</h2>
+        <p id="confirmDeleteText">¿Estás seguro que querés borrar esto?</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="secondary-button" id="cancelDeleteBtn">Cancelar</button>
+      <button type="button" class="danger-button" id="confirmDeleteBtn">Sí, eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Conectamos el JavaScript -->
+<script src="finanzas.js"></script>
+</body>
+</html>

@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TECNOFS · Precios</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+
+<!-- Conectamos el CSS -->
+<link rel="stylesheet" href="precios.css">
+</head>
+
+<body>
+<div class="app">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <div class="brand">
+            <img src="logo.png" class="brand-logo" alt="TECNOFS">
+            <div class="brand-text">
+                <strong>TECNOFS</strong>
+                <span>SERVICIO TÉCNICO<br>ESPECIALIZADO</span>
+            </div>
+        </div>
+
+        <nav class="nav">
+            <button class="nav-btn" onclick="window.location.href='index.html'">
+    <span class="nav-icon">🏠</span><span>Menú Principal</span>
+</button>
+            <button class="nav-btn active" data-page="catalog">
+                <span class="nav-icon">🔎</span><span>Consultar precios</span>
+            </button>
+            <button class="nav-btn" data-page="favorites">
+                <span class="nav-icon">⭐</span><span>Mis Favoritos</span>
+            </button>
+            <button class="nav-btn" data-page="solutions">
+                <span class="nav-icon">🛠️</span><span>Soluciones y Fallas</span>
+            </button>
+            <button class="nav-btn" data-page="notes">
+                <span class="nav-icon">📝</span><span>Notas Rápidas</span>
+            </button>
+            <button class="nav-btn" data-page="alerts">
+                <span class="nav-icon">⚠️</span><span>Actualizar Precios</span>
+            </button>
+            <button class="nav-btn" data-page="admin">
+                <span class="nav-icon">⚙️</span><span>Administrar</span>
+            </button>
+            <button class="nav-btn" data-page="backup">
+                <span class="nav-icon">💾</span><span>Respaldo</span>
+            </button>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <div class="sync-box">
+                <div class="sync-title">
+                    <span class="sync-dot" id="syncDot"></span>
+                    <span id="syncTitle">Conectando...</span>
+                </div>
+                <div class="sync-sub" id="syncSub">Firebase</div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+        <header class="topbar">
+            <div class="topbar-left">
+                <button class="mobile-menu" id="mobileMenuBtn" type="button">☰</button>
+                <div>
+                    <div class="page-title" id="topbarTitle">Consultar precios</div>
+                    <div class="page-subtitle">TECNOFS · Precios</div>
+                </div>
+            </div>
+            <div class="cloud-status">
+                <span class="sync-dot" id="topSyncDot"></span>
+                <span id="topSyncText">Conectando...</span>
+            </div>
+        </header>
+
+        <div class="content">
+
+            <!-- CATALOGO -->
+            <section class="page active" id="page-catalog">
+                <div id="viewCategories">
+                    <div class="hero">
+                        <img src="logo.png" class="hero-logo" alt="TECNOFS">
+                        <div class="hero-tag">Catálogo Profesional</div>
+                        <h1>TECNOFS · Precios</h1>
+                        <p>Seleccioná una categoría para explorar marcas, modelos y precios actualizados.</p>
+                    </div>
+
+                    <div id="historyContainer" style="display:none;">
+                        <div class="section-head" style="margin-top: 0;">
+                            <h2>Vistos Recientemente</h2>
+                        </div>
+                        <div class="history-scroll" id="historyScroll"></div>
+                    </div>
+
+                    <div class="section-head">
+                        <h2>Categorías <span class="count-pill" id="catCount">0</span></h2>
+                    </div>
+                    <div class="search-box">
+                        <span class="search-icon">🔎</span>
+                        <input type="search" id="catSearchInput" placeholder="Buscar categoría..." autocomplete="off">
+                    </div>
+                    <div class="cat-grid" id="catGrid"></div>
+                </div>
+
+                <div id="viewBrands" style="display:none">
+                    <div class="crumbs">
+                        <button class="crumb-btn" data-nav="categories">Categorías</button>
+                        <span class="crumb-sep">›</span>
+                        <span class="crumb-current" id="crumbBrands">Marcas</span>
+                    </div>
+                    <div class="section-head">
+                        <h2 id="brandsTitle">Marcas <span class="count-pill" id="brandCount">0</span></h2>
+                    </div>
+                    <div class="search-box">
+                        <span class="search-icon">🔎</span>
+                        <input type="search" id="brandSearchInput" placeholder="Buscar marca..." autocomplete="off">
+                    </div>
+                    <div class="brand-grid" id="brandGrid"></div>
+                </div>
+
+                <div id="viewModels" style="display:none">
+                    <div class="crumbs">
+                        <button class="crumb-btn" data-nav="categories">Categorías</button>
+                        <span class="crumb-sep">›</span>
+                        <button class="crumb-btn" data-nav="brands" id="crumbBackBrands">Marcas</button>
+                        <span class="crumb-sep">›</span>
+                        <span class="crumb-current" id="crumbModels">Modelos</span>
+                    </div>
+                    <div class="search-box">
+                        <span class="search-icon">🔎</span>
+                        <input type="search" id="modelSearchInput" placeholder="Buscar modelo..." autocomplete="off">
+                        <button class="search-clear" id="modelSearchClear" type="button">✕</button>
+                    </div>
+                    <div class="section-head">
+                        <h2 id="modelsTitle">Modelos <span class="count-pill" id="modelCount">0</span></h2>
+                    </div>
+                    <div class="model-grid" id="modelsGrid"></div>
+                </div>
+            </section>
+
+            <!-- FAVORITOS -->
+            <section class="page" id="page-favorites">
+                <div class="section-head" style="margin-top: 0;">
+                    <div>
+                        <h2>Mis Favoritos</h2>
+                        <p class="page-subtitle">Tus modelos guardados (solo en este dispositivo)</p>
+                    </div>
+                </div>
+                <div class="model-grid" id="favoritesGrid"></div>
+            </section>
+
+            <!-- SOLUCIONES Y FALLAS -->
+            <section class="page" id="page-solutions">
+                <div id="solViewBrands">
+                    <div class="section-head" style="margin-top: 0;">
+                        <div>
+                            <h2>Soluciones y Fallas</h2>
+                            <p class="page-subtitle">Seleccioná una marca o buscá directamente</p>
+                        </div>
+                    </div>
+                    <div class="search-box">
+                        <span class="search-icon">🔎</span>
+                        <input type="search" id="solSearchInput" placeholder="Buscar modelo o falla..." autocomplete="off">
+                    </div>
+                    <div class="brand-grid" id="solBrandsGrid"></div>
+                </div>
+
+                <div id="solViewFaults" style="display:none;">
+                    <div class="crumbs">
+                        <button class="crumb-btn" id="backToSolBrands">Soluciones</button>
+                        <span class="crumb-sep">›</span>
+                        <span class="crumb-current" id="crumbSolBrand">Marca</span>
+                    </div>
+                    <div class="section-head">
+                        <h2 id="solFaultsTitle">Fallas <span class="count-pill" id="solFaultCount">0</span></h2>
+                    </div>
+                    <div class="solutions-grid" id="solFaultsGrid"></div>
+                </div>
+
+                <div id="solViewDetail" style="display:none;">
+                    <button class="back-btn" id="backToSolFaults">← Volver a fallas</button>
+                    <div class="sol-detail-header">
+                        <div class="d-brand" id="solDetailBrand">MARCA</div>
+                        <h1 class="sol-detail-title" id="solDetailTitle">Título</h1>
+                        <div class="sol-detail-desc" id="solDetailDesc">Descripción...</div>
+                    </div>
+                    <div class="section-head">
+                        <h2>Galería de Fotos</h2>
+                    </div>
+                    <div class="sol-gallery" id="solDetailGallery"></div>
+                </div>
+            </section>
+
+            <!-- NOTAS RÁPIDAS -->
+            <section class="page" id="page-notes">
+                <div class="section-head" style="margin-top: 0;">
+                    <div>
+                        <h2>Notas y Pendientes</h2>
+                        <p class="page-subtitle">Apuntes y pedidos del taller</p>
+                    </div>
+                    <button class="btn btn-primary" id="addNoteBtn">+ Nueva Nota</button>
+                </div>
+                <div class="notes-grid" id="notesGrid"></div>
+            </section>
+
+            <!-- ACTUALIZAR PRECIOS -->
+            <section class="page" id="page-alerts">
+                <div class="admin-header">
+                    <div>
+                        <h1>Actualizar Precios</h1>
+                        <div class="sub">Selecciona los modelos que necesitan revisión</div>
+                    </div>
+                </div>
+                <div class="admin-search-wrap">
+                    <div class="admin-search-box">
+                        <span class="admin-search-icon">🔎</span>
+                        <input type="search" id="alertsSearchInput" placeholder="Buscar modelo..." autocomplete="off">
+                    </div>
+                </div>
+                <div class="admin-section">
+                    <div class="admin-section-head">
+                        <strong>Modelos <span class="badge" id="alertsBadge">0</span></strong>
+                        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                            <button class="btn btn-secondary" id="clearAllAlertsBtn" type="button">🧹 Limpiar Todo</button>
+                            <button class="btn btn-danger" id="markAlertsBtn" type="button">⚠️ Marcar Seleccionados</button>
+                        </div>
+                    </div>
+                    <div class="admin-list" id="alertsList"></div>
+                </div>
+            </section>
+
+            <!-- DETALLE DEL MODELO -->
+            <section class="page" id="page-detail">
+                <button class="back-btn" id="backToModels" type="button">← Volver a modelos</button>
+                <div class="detail-header">
+                    <div class="detail-image"><img id="detailImage" src="" alt=""></div>
+                    <div class="detail-info">
+                        <div class="d-brand" id="detailBrand">Marca</div>
+                        <h1 id="detailModelName">Modelo</h1>
+                        <div class="d-meta" id="detailModelMeta">Categoría</div>
+                    </div>
+                </div>
+                <div class="source-tabs">
+                    <button class="source-tab active" id="mineTab" type="button">💰 Mis precios</button>
+                    <button class="source-tab" id="supplierTab" type="button">📦 Proveedores</button>
+                </div>
+                <div class="price-list" id="priceList"></div>
+            </section>
+
+            <!-- LOGIN -->
+            <section class="page" id="page-login">
+                <div class="login-wrap">
+                    <div class="login-card">
+                        <div class="lock">🔒</div>
+                        <h2>Panel de administración</h2>
+                        <p>Ingresá la contraseña para gestionar el catálogo.</p>
+                        <input type="password" id="loginPassword" placeholder="• • • • • •" autocomplete="off">
+                        <button id="loginBtn" type="button">Entrar al panel</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ADMINISTRAR -->
+            <section class="page" id="page-admin">
+                <div class="admin-header">
+                    <div>
+                        <h1>Administrar</h1>
+                        <div class="sub">Gestiona tu catálogo completo</div>
+                    </div>
+                    <button class="btn btn-danger" id="logoutBtn" type="button">🚪 Cerrar sesión</button>
+                </div>
+                <div class="admin-search-wrap">
+                    <div class="admin-search-box">
+                        <span class="admin-search-icon">🔎</span>
+                        <input type="search" id="adminSearchInput" placeholder="Buscar marca o modelo..." autocomplete="off">
+                    </div>
+                    <div class="admin-search-info" id="adminSearchInfo">🔍 Escribí para filtrar.</div>
+                </div>
+
+                <div class="admin-section">
+                    <div class="admin-section-head">
+                        <strong>🛠️ Soluciones y Fallas <span class="badge" id="adminSolutionBadge">0</span></strong>
+                        <button class="btn btn-primary" id="addSolutionBtn" type="button">+ Agregar</button>
+                    </div>
+                    <div class="admin-list" id="solutionsAdminList"></div>
+                </div>
+
+                <div class="admin-section">
+                    <div class="admin-section-head">
+                        <strong>📂 Categorías <span class="badge" id="adminCatBadge">0</span></strong>
+                        <button class="btn btn-primary" id="addCategoryBtn" type="button">+ Agregar</button>
+                    </div>
+                    <div class="admin-list" id="categoriesAdminList"></div>
+                </div>
+
+                <div class="admin-section">
+                    <div class="admin-section-head">
+                        <strong>🏷️ Marcas <span class="badge" id="adminBrandBadge">0</span></strong>
+                        <button class="btn btn-primary" id="addBrandBtn" type="button">+ Agregar</button>
+                    </div>
+                    <div class="admin-list" id="brandsAdminList"></div>
+                </div>
+
+                <div class="admin-section">
+                    <div class="admin-section-head">
+                        <strong>📱 Modelos <span class="badge" id="adminModelBadge">0</span></strong>
+                        <button class="btn btn-primary" id="addModelBtn" type="button">+ Agregar</button>
+                    </div>
+                    <div class="admin-list" id="modelsAdminList"></div>
+                </div>
+            </section>
+
+            <!-- EDITOR DE MODELO -->
+            <section class="page" id="page-editor">
+                <button class="back-btn" id="backToAdmin" type="button">← Volver a administración</button>
+                <div class="editor">
+                    <div class="section-head"><h2 id="editorTitle">Editar modelo</h2></div>
+                    <div class="form-group"><label for="modelNameInput">Nombre del modelo</label><input class="form-control" id="modelNameInput" type="text"></div>
+                    <div class="form-group"><label for="modelBrandSelect">Marca</label><select class="form-control" id="modelBrandSelect"></select></div>
+                    <div class="form-group"><label for="modelCategorySelect">Categoría</label><select class="form-control" id="modelCategorySelect"></select></div>
+                    <div class="form-group">
+                        <label>Imagen del Modelo</label>
+                        <div class="upload-zone" id="modelUploadZone"><input type="file" id="modelImageInput" accept="image/*"><p>📷 Toca para subir foto</p></div>
+                        <input class="form-control" id="modelImageUrl" type="text" placeholder="O pega un link aquí..." style="margin-top:5px;">
+                        <div class="preview-img-container" id="modelPreviewContainer"><img id="modelPreviewImg" src=""><button class="btn-remove-img" id="btnRemoveModelImg" type="button">❌ Quitar</button></div>
+                    </div>
+                    <div class="form-group"><label for="mineTextarea">💰 Mis precios</label><textarea class="form-control" id="mineTextarea"></textarea></div>
+                    <div class="form-group"><label for="supplierTextarea">📦 Precios de proveedores</label><textarea class="form-control" id="supplierTextarea"></textarea></div>
+                    <div class="editor-actions">
+                        <button class="btn btn-secondary" id="cancelEditorBtn" type="button">Cancelar</button>
+                        <button class="btn btn-primary" id="saveModelBtn" type="button">Guardar cambios</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RESPALDO -->
+            <section class="page" id="page-backup">
+                <div class="section-head" style="margin-top:0;">
+                    <div><h2>Respaldo y sincronización</h2><div class="page-subtitle">Guardá o restaurá tu catálogo completo.</div></div>
+                </div>
+                <div class="backup-card">
+                    <h2>💾 Exportar datos</h2><p>Descarga una copia de tus datos.</p>
+                    <div class="backup-actions"><button class="btn btn-primary" id="exportBtn" type="button">Exportar JSON</button></div>
+                </div>
+                <div class="backup-card">
+                    <h2>📥 Importar datos</h2><p>Restaura información desde un archivo.</p>
+                    <div class="backup-actions"><label class="btn btn-primary" style="display:inline-flex;cursor:pointer">Seleccionar archivo<input type="file" id="importFile" accept=".json" hidden></label></div>
+                </div>
+                <div class="backup-card">
+                    <h2>☁️ Sincronización Firebase</h2><p>Los cambios se guardan automáticamente.</p>
+                    <button class="btn btn-secondary" id="forceSyncBtn" type="button">Sincronizar ahora</button>
+                </div>
+                <div class="backup-card">
+                    <h2>🧹 Limpiar Historial</h2><p>Borra la lista de "Vistos Recientemente" de este dispositivo.</p>
+                    <button class="btn btn-danger" id="clearHistoryBtn" type="button">Limpiar Recientes</button>
+                </div>
+                <div class="backup-card" style="border-color: rgba(255,85,102,0.3);">
+    <h2 style="color: var(--expense);">⚠️ Zona Peligrosa</h2>
+    <p>Elimina <b>absolutamente todos</b> los datos de tu catálogo (categorías, marcas, modelos y fallas) de este dispositivo y de la nube. Úsalo solo si vas a cargar un JSON nuevo desde cero.</p>
+    <button class="btn btn-danger" id="wipeAllDataBtn" type="button">🗑️ Borrar Todo y Empezar de Cero</button>
+</div>
+            </section>
+
+        </div>
+    </main>
+</div>
+
+<!-- MODAL GENERAL -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <h2 id="modalTitle">Agregar</h2>
+        <div id="modalBody"></div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" id="modalCancelBtn" type="button">Cancelar</button>
+            <button class="btn btn-primary" id="modalConfirmBtn" type="button">Guardar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL IMAGEN EXPANDIDA -->
+<div class="image-modal" id="imageModal">
+    <div class="image-modal-close" id="imageModalClose">×</div>
+    <img id="imageModalImg" src="" alt="Vista completa">
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- Conectamos el JavaScript -->
+<script src="precios.js"></script>
+</body>
+</html>
